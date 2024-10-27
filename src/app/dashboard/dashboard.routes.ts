@@ -78,6 +78,20 @@ const routes: Routes = [
             (m) => m.AdminUserComponent
           ),
       },
+      {
+        path: 'quotation',
+        loadComponent: () =>
+          import('./facturacion/quotation/quotation.component').then(
+            (m) => m.QuotationComponent
+          ),
+      },
+      {
+        path: 'list-quotation',
+        loadComponent: () =>
+          import('./facturacion/list-quotation/list-quotation.component').then(
+            (m) => m.ListQuotationComponent
+          ),
+      },
     ],
   },
 ] as Routes;
