@@ -9,7 +9,7 @@ export interface Entidad {
     telefono: string;
     email: string;
     tipoEntidad: TipoEntidad;
-    rol: RolResponse | null;
+    RolId: RolResponse | null;
 }
 
 export interface TipoEntidad{

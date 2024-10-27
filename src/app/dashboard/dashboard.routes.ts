@@ -65,6 +65,13 @@ const routes: Routes = [
           ),
       },
       {
+        path: 'movimiento',
+        loadComponent: () =>
+          import('./movimiento/movimiento.component').then(
+            (m) => m.MovimientoComponent
+          ),
+      },
+      {
         path: 'admin-user',
         loadComponent: () =>
           import('./admin-user/admin-user.component').then(

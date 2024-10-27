@@ -30,13 +30,15 @@ export class AdminUserComponent implements OnInit {
   entidadesService = inject(EntidadService);
   authService = inject(AuthService);
 
-  EntidadsuarioDueno: Entidad | null = null;
+  EntidadDueno: Entidad | null = null;
   entidades: any[] = [];
 
   Filtro: any[] = [];
   FiltroRol = 0;
   buscado = '';
   FlagModal = false;
+
+  //entidad: Entidad = new Entidad();
 
   Roles = [
     { id: 1, nombre: 'administrador' },
@@ -57,40 +59,81 @@ export class AdminUserComponent implements OnInit {
     id_tipoEntidad: 1,
   };
   Buscador = '';
+
   ngOnInit(): void {
     this.cargarEntidades();
   }
+
   cargarEntidades() {
     this.entidadesService.getEntidades().subscribe((res) => {
-      this.entidades = res;
+      console.log('Respuesta del servicio:', res);
+      this.entidades = res.map(entidad => {
+        console.log('Entidad:', entidad);
+        return {
+          ...entidad,
+          RolNombre: entidad.RolId ? entidad.RolId.nombre : 'Sin rol',
+        };
+      });
       this.Filtro = [...this.entidades];
+      console.log('Entidades procesadas:', this.entidades);
     });
+  }  
+  
+
+  editarEntidad(id: string) {
+
   }
+
+  // Método para capturar el cambio de rol y aplicar filtro
+  BuscarRol(event: Event) {
+    const selectElement = event.target as HTMLSelectElement;
+    this.FiltroRol = Number(selectElement.value);
+    this.aplicarFiltro(); // Llamar al método de filtro
+  }
+
   ToggleModal() {
     this.FlagModal = !this.FlagModal;
   }
+
   AbrirModal() {
     if (this.entidades.length == 0) this.cargarEntidades();
     this.ToggleModal();
   }
+
   Crear() {
-    this.authService.create(this.NewEntidad).subscribe(
-      (response) => {
+    const nuevaEntidad = {
+      id: '',
+      nombre: this.NewEntidad.nombre,
+      apellido: this.NewEntidad.apellido,
+      documento: this.NewEntidad.documento,
+      direccion: this.NewEntidad.direccion,
+      telefono: this.NewEntidad.telefono,
+      email: this.NewEntidad.email,
+      password: this.NewEntidad.password,
+      RolId: this.NewEntidad.RolId,
+      id_tipoEntidad: this.NewEntidad.id_tipoEntidad,
+    };
+  
+    this.authService.create(nuevaEntidad).subscribe({
+      next: (response) => {
         this.ToggleModal();
         Swal.fire({
           icon: 'success',
           title: 'Entidad Registrada',
           text: response.message,
         });
+        this.cargarEntidades(); // Recargar la lista de entidades
       },
-      (error) => {
+      error: (error) => {
         Swal.fire({
           icon: 'error',
-          title: error.error.message,
+          title: 'Error',
+          text: error.error.message,
         });
       }
-    );
-  }
+    });
+  }  
+
   aplicarFiltro() {
     this.Filtro = this.entidades.filter((entidad) => {
       const matchesNombre = entidad.nombre.toLowerCase().includes(this.buscado);
@@ -102,13 +145,6 @@ export class AdminUserComponent implements OnInit {
   search(event: Event) {
     const inputElement = event.target as HTMLInputElement;
     this.buscado = inputElement.value.toLowerCase();
-    this.aplicarFiltro(); // Llamar al método de filtro
-  }
-
-  // Método para capturar el cambio de rol y aplicar filtro
-  BuscarRol(event: Event) {
-    const selectElement = event.target as HTMLSelectElement;
-    this.FiltroRol = Number(selectElement.value);
     this.aplicarFiltro(); // Llamar al método de filtro
   }
   
