@@ -30,7 +30,9 @@ export class CategoriaService {
     });
   }
   getAll(): Observable<CategoriaResponse[]> {
-    return this.http.get<CategoriaResponse[]>(this.apiUrl);
+    return this.http.get<CategoriaResponse[]>(this.apiUrl, {
+      headers: this.getHeaders(),
+    });
   }
 
   postCategoria(categoria: CategoriaRequest): Observable<any> {
