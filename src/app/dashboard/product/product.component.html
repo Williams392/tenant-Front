@@ -45,7 +45,7 @@
           </td>
           <td class="px-6 py-4">
             <button type="button" (click)="editarProducto(p.id)" class="font-medium text-blue-600 dark:text-blue-500 hover:underline mr-2">Editar</button>
-            <button type="button" (click)="verSeries(p.id)" class="font-medium text-yellow-600 dark:text-yellow-500 hover:underline">Series</button>
+            <button type="button" [routerLink]="['/dashboard/product', p.id]" routerLinkActive="router-link-active"  class="font-medium text-yellow-600 dark:text-yellow-500 hover:underline">Series</button>
           </td>
         </tr>
       }

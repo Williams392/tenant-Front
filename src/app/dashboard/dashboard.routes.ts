@@ -92,6 +92,13 @@ const routes: Routes = [
             (m) => m.ListQuotationComponent
           ),
       },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./reportes/reportes.component').then(
+            (m) => m.ReportesComponent
+          ),
+      },
     ],
   },
 ] as Routes;

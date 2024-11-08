@@ -303,13 +303,21 @@ export class PurchaseComponent implements OnInit {
     this.fechaVencimiento = `${year}-${month}-${day}`;
     this.fechaPago = `${year}-${month}-${day}`;
   }
+  
+  SerieOpen = false;
+
+  onChangeProductoSerie(event: any) {
+    const selectedId = event.target.value;
+    this.ElegirSeries(selectedId);
+    this.ToggleIModal();
+  }
 
   ElegirSeries(idProducto: string | null) {
     if (idProducto) {
       this.idproductoSeleccionado = idProducto;
 
       const detalle = this.ventaData.detalles.find(
-        (detalle) => detalle.id_producto === idProducto
+        (detalle) => detalle.id_producto === idProducto,
       );
       if (detalle) {
         this.SeriesProducto = detalle.series;
@@ -318,30 +326,30 @@ export class PurchaseComponent implements OnInit {
       }
 
       const producto = this.listaProductos.find(
-        (producto) => producto.id === idProducto
+        (producto) => producto.id === idProducto,
       );
       if (producto) {
         this.nombreproductoSeleccionado = producto.nombre;
         this.preciounitproductoSeleccionado = producto.precio;
-        this.ToggleIModal();
+        //this.openIModal();
       }
     }
   }
 
   SeleccionarSeriesProducto(sn: string) {
     const detalleProducto = this.ventaData.detalles.find(
-      (detalle) => detalle.id_producto == this.idproductoSeleccionado
+      (detalle) => detalle.id_producto == this.idproductoSeleccionado,
     );
 
     if (detalleProducto) {
       if (detalleProducto.cantidad == 1) {
         this.ventaData.detalles = this.ventaData.detalles.filter(
-          (detalle) => detalle != detalleProducto
+          (detalle) => detalle != detalleProducto,
         );
         this.SeriesProducto = [];
       } else {
         detalleProducto.series = detalleProducto.series.filter(
-          (serie) => serie != sn
+          (serie) => serie != sn,
         );
         const cant = detalleProducto.cantidad - 1;
         detalleProducto.cantidad = cant;
@@ -384,7 +392,7 @@ export class PurchaseComponent implements OnInit {
   }
 
   ToggleIModal() {
-    this.InsertOpen = !this.InsertOpen;
+    this.SerieOpen = !this.SerieOpen;
   }
 
   CrearNuevaEntidad() {

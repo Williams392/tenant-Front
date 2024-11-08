@@ -10,7 +10,7 @@ import { ProductoService } from '../../services/producto.service';
 import { ProductoResponse } from '../../models/producto';
 import { MarcaService } from '../../services/marca.service';
 import { PedidoRequest } from '../../models/pedido';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { PedidoService } from '../../services/pedido.service';
 import { initFlowbite } from 'flowbite';
 import { FormsModule } from '@angular/forms';
@@ -27,6 +27,7 @@ import { ProductoSerieService } from '../../services/producto-serie.service';
     SelectSerachComponent,
     ModalComponent,
     TablesComponent,
+    RouterLink,
   ],
   templateUrl: './product.component.html',
   styles: ``,

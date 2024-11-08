@@ -10,10 +10,9 @@ import { CotizacionService } from '../../../services/cotizacion.service';
   standalone: true,
   imports: [CommonModule, FormsModule, CurrencyPipe],
   templateUrl: './list-quotation.component.html',
-  styles: ``
+  styles: ``,
 })
 export class ListQuotationComponent implements OnInit {
-
   router = inject(Router);
   cotizaciones: any[] = [];
   cotizacionService = inject(CotizacionService);
@@ -53,7 +52,7 @@ export class ListQuotationComponent implements OnInit {
               error.error?.message ||
               'Ocurrió un error al buscar la cotización.',
           });
-        },
+        }
       );
     } else {
       // Si no hay búsqueda, cargar todas las cotizaciones con paginación
@@ -68,7 +67,6 @@ export class ListQuotationComponent implements OnInit {
     this.getCotizaciones(this.page, this.pageSize);
   }
   CrearNuevaCotizacion() {
-    this.router.navigate(['/dashboard/cotizaciones/nuevo']);
+    this.router.navigate(['/dashboard/quotation']);
   }
-
 }
