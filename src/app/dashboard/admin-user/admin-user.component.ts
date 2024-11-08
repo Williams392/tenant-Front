@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectorRef,signal } from '@angular/core';
 import { EntidadService } from '../../services/entidad.service';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { InputComponent } from '../../components/input/input.component';
@@ -10,7 +10,10 @@ import Swal from 'sweetalert2';
 import { FormsModule } from '@angular/forms';
 import { RolResponse } from '../../models/rol';
 import { PrivilegioResponse } from '../../models/privilegio';
-import { Entidad } from '../../models/entidad';
+import { UserService } from '../../services/user.service';
+import { UserInfo } from '../../models/user';
+import { CommonModule } from '@angular/common';
+
 
 @Component({
   selector: 'app-admin-user',
@@ -22,34 +25,95 @@ import { Entidad } from '../../models/entidad';
     TablesComponent,
     SelectComponent,
     FormsModule,
+    CommonModule
   ],
   templateUrl: './admin-user.component.html',
   styles: ``
 })
 export class AdminUserComponent implements OnInit {
-  entidadesService = inject(EntidadService);
-  authService = inject(AuthService);
-
-  EntidadDueno: Entidad | null = null;
-  entidades: any[] = [];
+  constructor( 
+    private usuarioService: UserService,
+    //private authService : AuthService,
+    private cdr: ChangeDetectorRef,
+  ) { }
 
   Filtro: any[] = [];
   FiltroRol = 0;
   buscado = '';
   FlagModal = false;
+  entidades: any[] = []; // Añadido
 
-  //entidad: Entidad = new Entidad();
+  UsuarioDueno: UserInfo | null = null; // Ajustado
+  usuarioSelect: UserInfo | null = null;
+  usuarios: UserInfo[] = [];
+  closeResult = '';
 
   Roles = [
-    { id: 1, nombre: 'administrador' },
-    { id: 2, nombre: 'vendedor' },
-    { id: 3, nombre: 'almacenero' },
-    { id: 4, nombre: 'cliente' },
+    { id: 1, nombre: 'administrador'},
+    { id: 2, nombre: 'vendedor'},
+    { id: 3, nombre: 'almacenero'},
+    { id: 4, nombre: 'CARNET EXTRANJERIA'},
   ];
 
-  NewEntidad = {
+  TipoEntidad = [
+    { id: 1, nombre: 'DNI', cantdigitos: 8 },
+    { id: 6, nombre: 'RUC', cantdigitos: 11 },
+    { id: 7, nombre: 'PASAPORTE', cantdigitos: 12 },
+    { id: 8, nombre: 'cliente', cantdigitos: 12 },
+  ];
+
+  // Inicialización de roles con la nueva sintaxis
+  readonly roles = signal<RolResponse[]>([
+    {
+      id: 1,
+      nombre: 'administrador',
+      descripcion: 'Acceso total a funciones del tenant',
+      //completed: false,
+      privilegios: [
+        { id: 1, nombre: 'facturas', descripcion: 'Acceso total a funciones de facturacion' },
+        { id: 2, nombre: 'boletas', descripcion: 'Acceso total a funciones de boletas' },
+        { id: 3, nombre: 'usuarios', descripcion: 'Acceso total a funciones de administracion de usuarios'},
+        { id: 4, nombre: 'reportes', descripcion: 'Acceso reportes' },
+        { id: 5, nombre: 'almacenes', descripcion: 'Acceso almacenes' },
+        { id: 6, nombre: 'eccomerce', descripcion: 'Acceso ecomerce' },
+      ],
+    },
+    {
+      id: 2,
+      nombre: 'vendedor',
+      descripcion: 'Acceso total a funciones del facturacion',
+      //completed: false,
+      privilegios: [
+        { id: 1, nombre: 'facturas', descripcion: 'Acceso total a funciones de facturacion' },
+        { id: 2, nombre: 'boletas', descripcion: 'Acceso total a funciones de boletas' },
+        { id: 4, nombre: 'reportes', descripcion: 'Acceso reportes' },
+      ],
+    },
+    {
+      id: 3,
+      nombre: 'almacenero',
+      descripcion: 'Acceso total a funciones del almacen',
+      //completed: false,
+      privilegios: [
+        { id: 4, nombre: 'reportes', descripcion: 'Acceso reportes' },
+        { id: 5, nombre: 'almacenes', descripcion: 'Acceso almacenes' },
+      ],
+    },
+    {
+      id: 4,
+      nombre: 'cliente',
+      descripcion: 'Acceso total a funciones del ecommerce',
+      //completed: false,
+      privilegios: [
+        { id: 6, nombre: 'eccomerce', descripcion: 'Acceso ecomerce' },
+      ],
+    },
+  ]);
+
+  newUser: UserInfo = {
+    id: '', // Inicializa con un valor adecuado
     nombre: '',
-    apellido:  '',
+    apellido: '',
     documento: '',
     direccion: '',
     telefono: '',
@@ -57,7 +121,12 @@ export class AdminUserComponent implements OnInit {
     password: '',
     RolId: 0,
     id_tipoEntidad: 1,
+    picture: '', // Inicializa con un valor adecuado
+    verifiedWebsite: false, // Inicializa con un valor adecuado
+    TipoEntidadId: 0, // Inicializa con un valor adecuado
+    rol: null,
   };
+  
   Buscador = '';
 
   ngOnInit(): void {
@@ -65,23 +134,55 @@ export class AdminUserComponent implements OnInit {
   }
 
   cargarEntidades() {
-    this.entidadesService.getEntidades().subscribe((res) => {
-      console.log('Respuesta del servicio:', res);
-      this.entidades = res.map(entidad => {
-        console.log('Entidad:', entidad);
-        return {
-          ...entidad,
-          RolNombre: entidad.RolId ? entidad.RolId.nombre : 'Sin rol',
-        };
-      });
-      this.Filtro = [...this.entidades];
-      console.log('Entidades procesadas:', this.entidades);
+    this.usuarioService.getUsuariosTenant().subscribe((res) => {
+      this.usuarios = res;
+      this.Filtro = [...this.usuarios];
     });
-  }  
-  
+  }
 
-  editarEntidad(id: string) {
+  guardarUser() {
+    this.usuarioService.postUser(this.newUser).subscribe({
+      next: () => {
+        this.onSuccess('El usuario ha sido registrado exitosamente.');
+      },
+      error: (_error) => {
+        this.onError('El usuario no fue registrado.');
+      },
+    });
+  }
+  onSuccess(message: string) {
+    Swal.fire('Éxito', message, 'success');
+    this.cargarEntidades();
+    this.ToggleModal();  // Cerrar el modal después del éxito
+  }
+  onError(message: string) {
+    Swal.fire('Error', message, 'error');
+  }
 
+  ToggleModal() {
+    this.FlagModal = false;
+  }
+  AbrirModal() {
+    if (!this.UsuarioDueno) this.cargarEntidades(); // Ajustado
+    this.ToggleModal();
+  }
+
+  aplicarFiltro() {
+    this.Filtro = this.usuarios.filter((entidad) => {
+      const matchesNombre = entidad.nombre.toLowerCase().includes(this.buscado);
+      const matchesRol = this.FiltroRol === 0 || Number(entidad.RolId) === this.FiltroRol;
+      return matchesNombre && matchesRol;
+    });
+  }
+
+  editarUser(id: string) {
+
+  }
+
+  buscarUser(event: Event) {
+    const inputElement = event.target as HTMLInputElement;
+    this.buscado = inputElement.value.toLowerCase();
+    this.aplicarFiltro(); // Llamar al método de filtro
   }
 
   // Método para capturar el cambio de rol y aplicar filtro
@@ -91,61 +192,13 @@ export class AdminUserComponent implements OnInit {
     this.aplicarFiltro(); // Llamar al método de filtro
   }
 
-  ToggleModal() {
-    this.FlagModal = !this.FlagModal;
+  CCOpen = false;
+
+  name_modal = 'CREAR';
+  openCCModal() {
+    this.name_modal = 'CREAR';
+    this.CCOpen = true;
   }
 
-  AbrirModal() {
-    if (this.entidades.length == 0) this.cargarEntidades();
-    this.ToggleModal();
-  }
-
-  Crear() {
-    const nuevaEntidad = {
-      id: '',
-      nombre: this.NewEntidad.nombre,
-      apellido: this.NewEntidad.apellido,
-      documento: this.NewEntidad.documento,
-      direccion: this.NewEntidad.direccion,
-      telefono: this.NewEntidad.telefono,
-      email: this.NewEntidad.email,
-      password: this.NewEntidad.password,
-      RolId: this.NewEntidad.RolId,
-      id_tipoEntidad: this.NewEntidad.id_tipoEntidad,
-    };
-  
-    this.authService.create(nuevaEntidad).subscribe({
-      next: (response) => {
-        this.ToggleModal();
-        Swal.fire({
-          icon: 'success',
-          title: 'Entidad Registrada',
-          text: response.message,
-        });
-        this.cargarEntidades(); // Recargar la lista de entidades
-      },
-      error: (error) => {
-        Swal.fire({
-          icon: 'error',
-          title: 'Error',
-          text: error.error.message,
-        });
-      }
-    });
-  }  
-
-  aplicarFiltro() {
-    this.Filtro = this.entidades.filter((entidad) => {
-      const matchesNombre = entidad.nombre.toLowerCase().includes(this.buscado);
-      const matchesRol =
-        this.FiltroRol === 0 || entidad.RolId === this.FiltroRol;
-      return matchesNombre && matchesRol;
-    });
-  }
-  search(event: Event) {
-    const inputElement = event.target as HTMLInputElement;
-    this.buscado = inputElement.value.toLowerCase();
-    this.aplicarFiltro(); // Llamar al método de filtro
-  }
   
 }
